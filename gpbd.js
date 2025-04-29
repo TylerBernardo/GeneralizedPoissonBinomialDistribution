@@ -1,3 +1,4 @@
+import {check_args_GPB, transformGPB} from "./utility.js"
 
 //compute the greatest common divisor of 2 numbers
 function gcd(a, b) {
@@ -190,4 +191,8 @@ function dgpb_dc(ops, probs, val_p, val_q){
         //assign each probability to a group
         var ord = d.sort((a,b) => a-b)
     }
+}
+
+function dgpbinom(x, probs, val_p, val_q, wts = null, method = "DivideFFT", log = false){
+    
 }
