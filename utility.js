@@ -1,4 +1,19 @@
-export function check_args_GPB(x,probs,val_p,val_q,wts,method){
+function pmax(a1,a2){
+    return a1.map((value,index) => value > a2[index] ? value : a2[index])
+}
+
+function pmin(a1,a2){
+    return a1.map((value,index) => value < a2[index] ? value : a2[index])
+}
+
+function range(size, startAt = 0) {
+    return [...Array(size).keys()].map(i => i + startAt);
+}
+
+//console.log(pmin([1,2,3,4],[2,3,4,1]))
+//console.log(pmax([1,2,3,4],[2,3,4,1]))
+
+function check_args_GPB(x,probs,val_p,val_q,wts,method){
     //check if x only contains integers
     var isInt = x.reduce(((a,b) => a && (b - Math.round(b) != 0),true))
     if(x != null && !isInt){
@@ -42,10 +57,90 @@ export function check_args_GPB(x,probs,val_p,val_q,wts,method){
     if(!(["DivideFFT","Convolve","Characteristic","Normal","Refined Normal"].contains(method))){
         throw new error("Method does nto exist")
     }
-    
+
     return method
 }
 
-export function transformGPB(x,probls,val_p,val_q,wts){
+function transformGPB(x,probs,val_p,val_q,wts){
+    //number of probabilities
+    var n = probs.length;
+    //expand probs, val_p, and val_q acording to the counts in wts
+    //if wts is null, set it to be a vector of ones
+    if(wts == null){
+        wts = new Array(n).fill(1)
+    }
 
+    //expand probs, val_p, val_q
+    var newProbs = [], newP = [], newQ = []
+    for(var i = 0; i < n; i++){
+        newProbs.concat(Array(wts[i]).fill(probs[i]))
+        newP.concat(Array(wts[i]).fill(val_p[i]))
+        newQ.concat(Array(wts[i]).fill(val_q[i]))
+    }
+    probs = newProbs; 
+    val_p = newP;
+    val_q = newQ;
+
+    //reorder val_p and val_q so that values in 'val_p' are always greater 
+    var val_gr = pmax(val_p,val_q)
+    var val_lo = pmin(val_p,val_q)
+    probs = probs.map((value,index) => val_gr[index] > val_p[index] ? 1 - value : value)
+
+    //recompute length of 'probs' (= sum of 'wts')
+    n = wts.reduce((a,b) => a+b,0)
+
+    //determine relevent range of observations
+    //determine minimum and maximum possible observations
+    var sum_min = val_lo.reduce((a,b)=>a+b,0)
+    var sum_max = val_gr.reduce((a,b)=>a+b,0)
+
+    //which probabilities are 0 or 1, which val_p and val_q are equal
+    var idx0 = [],idx1 = [], idxv = [], idxr = []
+    for(var i = 0; i < probs.length; i++){
+        if(probs[i] == 0){
+            idx0.push(i)
+        }else if(probs[i] == 1){
+            idx1.push(i)
+        }else if(val_gr[i] == val_lo[i]){
+            idxv.push(i)
+        }else{
+            idxr.push(i)
+        }
+    }
+    //guaranteed
+    var val_gr_sure = idx1.map((value,index) => val_gr[value])
+    var val_lo_sure = idx0.map((value,index) => val_lo[value])
+    var vals_equal = idxv.map((value,index) => val_gr[value])
+    var sum_sure = val_gr_sure.reduce((a,b)=>a+b,0) + val_lo_sure.reduce((a,b)=>a+b,0) + vals_equal.reduce((a,b)=>a+b,0)
+    // limit 'probs', 'val_p', and 'val_q' to relevant range
+    var np = idxr.length
+    if(np){
+        probs = idxr.map((value,index) => probs[value])
+        val_gr = idxr.map((value,index) => val_gr[value])
+        val_lo = idxr.map((value,index) => val_lo[value])
+    }else{
+        probs = -1
+        val_gr = 0
+        val_lo = 0
+    }
+
+    //compute differences and their gcd
+    var diffs = val_gr.map((value,index) => value - val_lo[index])
+
+    //bounds of relevent observations
+    var sum_min_in = sum_sure + val_lo.reduce((a,b)=>a+b,0)
+    var sum_max_in = sum_sure + val_gr.reduce((a,b)=>a+b,0)
+
+    var toReturn = {
+        "probs":probs,
+        "val_p":val_gr,
+        "val_q":val_lo,
+        "compl_range":range(sum_max-sum_min,sum_min),
+        "inner_range":range(sum_max_in-sum_min_in,sum_min_in),
+        "inner_size":sum_max_in - sum_min_in + 1,
+        "n":np,
+        "diffs":diffs
+    }
 }
+
+module.exports = {pmax,pmin,check_args_GPB,transformGPB} 

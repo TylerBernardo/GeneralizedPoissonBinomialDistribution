@@ -1,4 +1,4 @@
-import {check_args_GPB, transformGPB} from "./utility.js"
+import {check_args_GPB, transformGPB, pmax, pmin} from "./utility.js"
 
 //compute the greatest common divisor of 2 numbers
 function gcd(a, b) {
@@ -97,7 +97,7 @@ function dgpb_conv(obs, probs, val_p, val_q){
 
     //if maximum  absolution difference equals 1, we have an odinary poisson binomial distribution
     //TODO: implement dpb_conv and add this area back
-    if(max(diffs) == 1 && min(diffs) == -1 && console.log("if statement passed") && false){
+    if(max(diffs) == 1 && min(diffs) == -1 && console.log("if statement passed")){
         // if val_p[i] was not the larger one, the respective probs[i] has to be 'flipped'
         // furthermore: if difference is 0 (i.e. u[i] equals v[i]), a non-zero outcome is impossible
         var probs_flipped = new Array(sizeIn)
@@ -194,5 +194,38 @@ function dgpb_dc(ops, probs, val_p, val_q){
 }
 
 function dgpbinom(x, probs, val_p, val_q, wts = null, method = "DivideFFT", log = false){
-    
+    //preliminary checks
+    var method = check_args_GPB(x,probs,val_p,val_q,wts,method)
+
+    //transform input to relevant range
+    var transf = transformGPB(x,probs,val_p,val_q,wts)
+
+    //if x is null, return all possible probabilities
+    if(x == null){x = transf.compl_range}
+
+    var idx_valid = x.filter((value,index) => transf.compl_range.includes(value))
+
+    //compute probabilities
+    //vector for storing probabilities
+    var d= Array(x.length)
+
+    if(idx_valid.length){
+        //select valid observations in relevant range
+        var y = idx_valid.map((value,index)=>x[value])
+
+        //relevant obersations
+        var idx_inner = y.filter((value,index) => transf.inner_range.includes(value))
+        //if no input value is in relevent range
+        if(idx_inner.length){
+            //transformed input parameters
+            n = transf.n
+            probs =transf.probs
+            var diffs = transf.diffs
+
+            if(n == 0){
+                //probs contains only zeros and ones, i.e. only one possible observation
+                
+            }
+        }
+    }
 }
