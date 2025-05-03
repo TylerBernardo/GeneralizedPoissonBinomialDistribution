@@ -1,4 +1,4 @@
-import {check_args_GPB, transformGPB, pmax, pmin} from "./utility.mjs"
+import {check_args_GPB, transformGPB, pmax, pmin, range} from "./utility.mjs"
 
 //compute the greatest common divisor of 2 numbers
 function gcd(a, b) {
@@ -194,6 +194,7 @@ function dgpb_dc(ops, probs, val_p, val_q){
 
         //assign each probability to a group
         var ord = d.sort((a,b) => a-b)
+        //TODO: continue implementing
     }
 }
 
@@ -207,18 +208,18 @@ function dgpbinom(x, probs, val_p, val_q, wts = null, method = "DivideFFT", log 
     //if x is null, return all possible probabilities
     if(x == null){x = transf.compl_range}
 
-    var idx_valid = x.filter((value,index) => transf.compl_range.includes(value))
+    var idx_valid = x.reduce((a,cv,i)=> transf.compl_range.includes(cv) ? a.concat([i]) : a,[])//x.filter((value,index) => transf.compl_range.includes(value))
 
     //compute probabilities
     //vector for storing probabilities
-    var d= Array(x.length)
+    var d= Array(x.length).fill(0)
 
     if(idx_valid.length){
         //select valid observations in relevant range
         var y = idx_valid.map((value,index)=>x[value])
 
         //relevant obersations
-        var idx_inner = y.filter((value,index) => transf.inner_range.includes(value))
+        var idx_inner = y.reduce((a,cv,i)=> transf.inner_range.includes(cv) ? a.concat([i]) : a,[])//y.filter((value,index) => transf.inner_range.includes(value))
         //if no input value is in relevent range
         if(idx_inner.length){
             //transformed input parameters
@@ -263,7 +264,17 @@ function dgpbinom(x, probs, val_p, val_q, wts = null, method = "DivideFFT", log 
                             result = dgpb_na(z,probs,diffs,Array(n).fill(0),true)
                     }
                     //var toselect = idx_inner.map((value)=>idx_valid[value])
-                    console.log(result)
+                    //console.log(result)
+                    var indicies = range(d.length)
+                    indicies = idx_valid.map((value)=>indicies[value])
+                    indicies = idx_inner.map((value)=>indicies[value])
+                    var j = 0;
+                    for(var i = 0; i < d.length; i++){
+                        if(indicies.includes(i)){
+                            d[i] = result[j];
+                            j++;
+                        }
+                    }
                 }
             }
         }
@@ -277,7 +288,10 @@ function random(low,high){
 
 //tests
 var pp = [0.2655087, 0.3721239, 0.5728534, 0.9082078, 0.2016819, 0.8983897, 0.9446753]//Array.from({length:7},()=>Math.random())
-var va = Array.from({length:7},()=>random(0,6))
-var vb = Array.from({length:7},()=>random(0,6))
+var va = [2, 5, 1, 2, 2, 0, 4]//Array.from({length:7},()=>random(0,6))
+var vb = [4, 1, 5, 5, 1, 6, 0]//Array.from({length:7},()=>random(0,6))
 
 console.log(dgpbinom(null,pp,Array(7).fill(1),Array(7).fill(0)))
+
+
+console.log(dgpbinom(null,[0,0,0.3,0.6,1,1,1],va,vb))

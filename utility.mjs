@@ -6,7 +6,7 @@ export function pmin(a1,a2){
     return a1.map((value,index) => value < a2[index] ? value : a2[index])
 }
 
-function range(size, startAt = 0) {
+export function range(size, startAt = 0) {
     return [...Array(size).keys()].map(i => i + startAt);
 }
 
@@ -134,8 +134,8 @@ export function transformGPB(x,probs,val_p,val_q,wts){
         "probs":probs,
         "val_p":val_gr,
         "val_q":val_lo,
-        "compl_range":range(sum_max-sum_min,sum_min),
-        "inner_range":range(sum_max_in-sum_min_in,sum_min_in),
+        "compl_range":range(sum_max-sum_min+1,sum_min),
+        "inner_range":range(sum_max_in-sum_min_in+1,sum_min_in),
         "inner_size":sum_max_in - sum_min_in + 1,
         "n":np,
         "diffs":diffs
