@@ -198,7 +198,7 @@ function dgpb_dc(ops, probs, val_p, val_q){
     }
 }
 
-function dgpbinom(x, probs, val_p, val_q, wts = null, method = "DivideFFT", log = false){
+export function dgpbinom(x, probs, val_p, val_q, wts = null, method = "DivideFFT", log = false){
     //preliminary checks
     var method = check_args_GPB(x,probs,val_p,val_q,wts,method)
 
@@ -291,7 +291,7 @@ var pp = [0.2655087, 0.3721239, 0.5728534, 0.9082078, 0.2016819, 0.8983897, 0.94
 var va = [2, 5, 1, 2, 2, 0, 4]//Array.from({length:7},()=>random(0,6))
 var vb = [4, 1, 5, 5, 1, 6, 0]//Array.from({length:7},()=>random(0,6))
 
-console.log(dgpbinom(null,pp,Array(7).fill(1),Array(7).fill(0)))
+//console.log(dgpbinom(null,pp,Array(7).fill(1),Array(7).fill(0)))
 
 
-console.log(dgpbinom(null,[0,0,0.3,0.6,1,1,1],va,vb))
+//console.log(dgpbinom(null,[0,0,0.3,0.6,1,1,1],va,vb))
