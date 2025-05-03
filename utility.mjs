@@ -39,8 +39,8 @@ export function check_args_GPB(x,probs,val_p,val_q,wts,method){
     }
 
     //check if val_p and val_q contain only integers 
-    var pIsInt = val_p.every((value)=>value - Math.round(value) != 0)
-    var qIsInt = val_q.every((value)=>value - Math.round(value) != 0)
+    var pIsInt = val_p.every((value)=>value - Math.round(value) == 0)
+    var qIsInt = val_q.every((value)=>value - Math.round(value) == 0)
     if(!pIsInt){
         val_p = val_p.map((item,index)=>Math.floor(item))
     }
@@ -72,9 +72,9 @@ export function transformGPB(x,probs,val_p,val_q,wts){
     //expand probs, val_p, val_q
     var newProbs = [], newP = [], newQ = []
     for(var i = 0; i < n; i++){
-        newProbs.concat(Array(wts[i]).fill(probs[i]))
-        newP.concat(Array(wts[i]).fill(val_p[i]))
-        newQ.concat(Array(wts[i]).fill(val_q[i]))
+        newProbs = newProbs.concat(Array(wts[i]).fill(probs[i]))
+        newP = newP.concat(Array(wts[i]).fill(val_p[i]))
+        newQ = newQ.concat(Array(wts[i]).fill(val_q[i]))
     }
     probs = newProbs; 
     val_p = newP;
@@ -124,7 +124,6 @@ export function transformGPB(x,probs,val_p,val_q,wts){
     }
 
     //compute differences and their gcd
-    console.log(val_gr)
     var diffs = val_gr.map((value,index) => value - val_lo[index])
 
     //bounds of relevent observations
@@ -141,4 +140,6 @@ export function transformGPB(x,probs,val_p,val_q,wts){
         "n":np,
         "diffs":diffs
     }
+
+    return toReturn
 }
