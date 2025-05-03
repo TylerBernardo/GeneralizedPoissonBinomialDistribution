@@ -1,8 +1,8 @@
-function pmax(a1,a2){
+export function pmax(a1,a2){
     return a1.map((value,index) => value > a2[index] ? value : a2[index])
 }
 
-function pmin(a1,a2){
+export function pmin(a1,a2){
     return a1.map((value,index) => value < a2[index] ? value : a2[index])
 }
 
@@ -13,17 +13,16 @@ function range(size, startAt = 0) {
 //console.log(pmin([1,2,3,4],[2,3,4,1]))
 //console.log(pmax([1,2,3,4],[2,3,4,1]))
 
-function check_args_GPB(x,probs,val_p,val_q,wts,method){
-    //check if x only contains integers
-    var isInt = x.reduce(((a,b) => a && (b - Math.round(b) != 0),true))
-    if(x != null && !isInt){
+export function check_args_GPB(x,probs,val_p,val_q,wts,method){
+    //check if x only contains integers x.reduce(((a,b) => a && (b - Math.round(b) != 0),true))
+    if(x != null && !x.every((value)=>value - Math.round(value) != 0)){
         //x contains non-integers
         x = x.map((item,index)=>Math.floor(item))
     }
 
     //check if 'probs' contains only probabilities
-    var isValid = x.reduce(((a,b) => a && (b != null && b!= NaN),true))
-    var isInRange = x.reduce(((a,b) => a && (b >= 0 && b <= 1),true))
+    var isValid = probs.every((value) => value != null && value != NaN)//probs.reduce(((a,b) => a && (b != null && b!= NaN),true))
+    var isInRange = probs.every((value) => value >= 0 && value <= 1)//probs.reduce(((a,b) => a && (b >= 0 && b <= 1),true))
     if(!isValid || !isInRange){
         throw new error("'probs' must contain real numbers between 0 and 1!")
     }
@@ -39,9 +38,9 @@ function check_args_GPB(x,probs,val_p,val_q,wts,method){
         throw new error("'probs' and 'wts' must have the same length")
     }
 
-    //check if val_p and val_q contain only integers
-    var pIsInt = val_p.reduce(((a,b) => a && (b - Math.round(b) != 0),true))
-    var qIsInt = val_q.reduce(((a,b) => a && (b - Math.round(b) != 0),true))
+    //check if val_p and val_q contain only integers 
+    var pIsInt = val_p.every((value)=>value - Math.round(value) != 0)
+    var qIsInt = val_q.every((value)=>value - Math.round(value) != 0)
     if(!pIsInt){
         val_p = val_p.map((item,index)=>Math.floor(item))
     }
@@ -49,19 +48,19 @@ function check_args_GPB(x,probs,val_p,val_q,wts,method){
         val_q = val_q.map((item,index)=>Math.floor(item))
     }
 
-    var wtsCheck = wts.reduce((a,b) => a && (b != NaN && b >= 0 && Math.abs(b-Math.round(b)) <= Math.pow(10,-7)),true)
-    if(wts != null && !wtsCheck){
+    //var wtsCheck = 
+    if(wts != null && !wts.every((b) => (b != NaN && b >= 0 && Math.abs(b-Math.round(b)) <= Math.pow(10,-7)))){
         throw new error("'wts' must contain non-negative integers")
     }
 
-    if(!(["DivideFFT","Convolve","Characteristic","Normal","Refined Normal"].contains(method))){
+    if(!(["DivideFFT","Convolve","Characteristic","Normal","Refined Normal"].includes(method))){
         throw new error("Method does nto exist")
     }
 
     return method
 }
 
-function transformGPB(x,probs,val_p,val_q,wts){
+export function transformGPB(x,probs,val_p,val_q,wts){
     //number of probabilities
     var n = probs.length;
     //expand probs, val_p, and val_q acording to the counts in wts
@@ -119,12 +118,13 @@ function transformGPB(x,probs,val_p,val_q,wts){
         val_gr = idxr.map((value,index) => val_gr[value])
         val_lo = idxr.map((value,index) => val_lo[value])
     }else{
-        probs = -1
-        val_gr = 0
-        val_lo = 0
+        probs = [1]
+        val_gr = [0]
+        val_lo = [0]
     }
 
     //compute differences and their gcd
+    console.log(val_gr)
     var diffs = val_gr.map((value,index) => value - val_lo[index])
 
     //bounds of relevent observations
@@ -142,5 +142,3 @@ function transformGPB(x,probs,val_p,val_q,wts){
         "diffs":diffs
     }
 }
-
-module.exports = {pmax,pmin,check_args_GPB,transformGPB} 

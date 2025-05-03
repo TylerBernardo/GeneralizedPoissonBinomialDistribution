@@ -1,4 +1,4 @@
-import {check_args_GPB, transformGPB, pmax, pmin} from "./utility.js"
+import {check_args_GPB, transformGPB, pmax, pmin} from "./utility.mjs"
 
 //compute the greatest common divisor of 2 numbers
 function gcd(a, b) {
@@ -36,10 +36,6 @@ function norm_dpb(pmf){
         }
     }
     return pmf
-}
-
-function dpb_conv(){
-    console.log("NOT IMPLEMENTED")
 }
 
 function dgpb_conv_int(probs, diffs, sizeIn, sizeOut){
@@ -125,6 +121,13 @@ function dgpb_conv(obs, probs, val_p, val_q){
     }
 }
 
+function dgpb_dftcf(){
+    throw new error("Not yet implemented")
+}
+
+function dgpb_na(){
+    throw new error("Not yet implemented")
+}
 //https://github.com/fj86/PoissonBinomial/blob/master/src/PoissonBinomial.cpp#L862
 //in progress
 function dgpb_dc(ops, probs, val_p, val_q){
@@ -224,8 +227,55 @@ function dgpbinom(x, probs, val_p, val_q, wts = null, method = "DivideFFT", log 
 
             if(n == 0){
                 //probs contains only zeros and ones, i.e. only one possible observation
-                
+                d = idx_valid.map((value,index)=>d[value])
+                d = idx_inner.map((value,index)=> d[value])
+            }else{
+                var z = idx_inner.map((value,index)=>y[value] - transf.inner_range[1])
+                //compute distribution TODO: IMPLEMENT dpbinom
+                if(false && diffs.every((val,i,arr) => val === arr[0])){
+                    //all values of 'diffs' are equal, i.e. a multiplied ordinary poisson binomial distribution
+                    var remainder = z.map((value,index)=> value % diffs[1])
+                    var idx_r = []
+                    for(var i = 0; i < remainder.length; i++){
+                        if(remainder[i] == 0){
+                            idx_r.push(i)
+                        }
+                    }
+                    var p1 = z.map((value)=>value % diffs[1])
+                    var result = dpbinom(idx_r.map((value)=>p1[value]),probs,method)
+                }else{
+                    var result;
+                    switch(method){
+                        case "DivideFFT":
+                            result = dgpb_dc(z,probs,diffs,Array(n).fill(0))
+                            break;
+                        case "Convolve":
+                            result = dgpb_conv(z,probs,diffs,Array(n).fill(0))
+                            break;
+                        case "Characteristic":
+                            result = dgpb_dftcf(z,probs,diffs,Array(n).fill(0))
+                            break;
+                        case "Normal":
+                            result= dgpb_na(z,probs,diffs,Array(n).fill(0),false)
+                            break;
+                        case "RefinedNormal":
+                            result = dgpb_na(z,probs,diffs,Array(n).fill(0),true)
+                    }
+                    //var toselect = idx_inner.map((value)=>idx_valid[value])
+                    console.log(result)
+                }
             }
         }
     }
 }
+
+function random(low,high){
+    return Math.floor(Math.random() * (high-low)) + low
+}
+
+//tests
+var pp = Array(7).map((value)=>Math.random())
+var va = Array(7).map((value)=>random(0,6))
+var vb = Array(7).map((value)=>random(0,6))
+
+console.log(dgpbinom(null,pp,Array(7).fill(1),Array(7).fill(0)))
